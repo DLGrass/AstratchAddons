@@ -2,8 +2,71 @@ import { renderMarkdown } from "./markdown.js";
 
 export default (ctx) => {
   const { vm } = ctx;
-  // 翻译：host 注入的 ctx.t 已绑定本插件命名空间，直接 ctx.t("key") 即可。
-  // 不要在插件内硬编码 `addon_<id>` 命名空间——自定义插件导入后 id 会变化。
+  // 翻译：host 用 i18next 承载插件翻译，条目注册在 `addon_<id>` 命名空间下，
+  // 调用方式为完整键名 `ctx.t("addon_<id>:key")`。
+  // 注意：商店（registry）安装时运行时 id 就是 info.yaml 的 id；
+  // 而自定义导入时 id = "custom-" + slugify(文件夹名)（见 host 的 src/addons/custom.ts），
+  // 翻译会被注册到另一个命名空间，且 ctx 不暴露运行时 id——
+  // 所以这里用探针在候选命名空间中找出真实命中的那个并缓存。
+
+  /** info.yaml 中声明的插件 id 与对应的规范命名空间 */
+  const ADDON_ID = "comment-markdown-editor";
+  const CANONICAL_NS = `addon_${ADDON_ID}`;
+
+  /**
+   * 候选命名空间：
+   *  - addon_comment-markdown-editor                     商店安装
+   *  - addon_custom-comment-markdown-editor-v1-0-0       自定义导入 release 文件夹（comment-markdown-editor@v1.0.0 slug 化）
+   *  - addon_custom-comment-markdown-editor              自定义导入且文件夹名恰为插件 id
+   */
+  const NS_CANDIDATES = [
+    CANONICAL_NS,
+    "addon_custom-comment-markdown-editor-v1-0-0",
+    "addon_custom-comment-markdown-editor",
+  ];
+
+  /** 探测命中并缓存的命名空间 */
+  let resolvedNs = null;
+
+  /** ctx.t 兼容封装：在候选命名空间中找到真正命中的完整键名。
+   * 注意 i18next 对「命名空间不存在」的回显是裸键名（返回 "btnEdit" 而非
+   * "addon_xxx:btnEdit"），所以命中判断必须同时排除 full 和 key 两种回显。 */
+  const t = (key) => {
+    const order = resolvedNs
+      ? [resolvedNs, ...NS_CANDIDATES.filter((ns) => ns !== resolvedNs)]
+      : NS_CANDIDATES;
+    for (const ns of order) {
+      const full = `${ns}:${key}`;
+      const value = ctx.t(full);
+      if (value != null && value !== full && value !== key) {
+        resolvedNs = ns;
+        return value;
+      }
+    }
+    // 兜底：宿主若把 ctx.t 预绑定到插件命名空间，裸键名也能命中
+    const value = ctx.t(key);
+    if (value != null && value !== key) return value;
+    return key;
+  };
+
+  // 一次性诊断：输出各命名空间探针的真实命中情况；
+  // 若翻译仍不生效，把控制台这条日志反馈回来即可进一步定位。
+  try {
+    const probeHit = (ns) => {
+      const full = `${ns}:btnEdit`;
+      const value = ctx.t(full);
+      return value != null && value !== full && value !== "btnEdit";
+    };
+    console.info("[comment-markdown-editor] i18n probe:", {
+      canonical: probeHit(CANONICAL_NS),
+      customVersioned: probeHit("addon_custom-comment-markdown-editor-v1-0-0"),
+      customPlain: probeHit("addon_custom-comment-markdown-editor"),
+      bare: ctx.t("btnEdit"),
+      resolvedNs,
+    });
+  } catch {
+    /* 忽略诊断失败 */
+  }
 
   /** 标记属性：已增强的注释框 */
   const PROCESSED_ATTR = "data-ashMdProcessed";
@@ -338,14 +401,39 @@ export default (ctx) => {
 
     const modeIndicator = document.createElement("span");
     modeIndicator.className = MODE_INDICATOR_CLASS;
-    modeIndicator.textContent = ctx.t("modeEdit");
 
     const toggleButton = document.createElement("button");
     toggleButton.className = TOGGLE_BUTTON_CLASS;
     toggleButton.type = "button";
     toggleButton.dataset.mode = MODE_EDIT;
-    toggleButton.textContent = `${ctx.t("btnEdit")}`;
-    toggleButton.title = ctx.t("btnEditTitle");
+
+    /** 按当前模式刷新按钮 / 指示器文案（文案唯一写入点） */
+    const applyLabels = (mode) => {
+      const preview = mode === MODE_PREVIEW;
+      toggleButton.textContent = t(preview ? "btnPreview" : "btnEdit");
+      toggleButton.title = t(preview ? "btnPreviewTitle" : "btnEditTitle");
+      modeIndicator.textContent = t(preview ? "modePreview" : "modeEdit");
+      modeIndicator.dataset.mode = mode;
+    };
+
+    /** t() 未命中时会原样返回键名，据此判断翻译是否真的可解析 */
+    const labelsResolved = () => t("btnEdit") !== "btnEdit";
+
+    /**
+     * 初始文案带重试：host 的 i18n 表可能晚于插件主函数就绪，
+     * 就绪前渲染的文案会回显键名（如 "modeEdit"），就绪后重刷即可纠正。
+     * 重试读的是 dataset.mode，期间用户切换模式也不会写错文案。
+     */
+    let labelRetryTimer = 0;
+    const scheduleLabelRetry = (attemptsLeft) => {
+      if (labelsResolved() || attemptsLeft <= 0) return;
+      labelRetryTimer = setTimeout(() => {
+        applyLabels(toggleButton.dataset.mode);
+        scheduleLabelRetry(attemptsLeft - 1);
+      }, 250);
+    };
+    applyLabels(toggleButton.dataset.mode);
+    scheduleLabelRetry(20);
 
     if (showIndicator) toggleContainer.appendChild(modeIndicator);
     toggleContainer.appendChild(toggleButton);
@@ -460,21 +548,14 @@ export default (ctx) => {
     const setMode = (nextMode) => {
       if (toggleButton.dataset.mode === nextMode) return;
       toggleButton.dataset.mode = nextMode;
+      applyLabels(nextMode);
 
       if (nextMode === MODE_PREVIEW) {
-        toggleButton.textContent = `${ctx.t("btnPreview")}`;
-        toggleButton.title = ctx.t("btnPreviewTitle");
-        modeIndicator.textContent = ctx.t("modePreview");
-        modeIndicator.dataset.mode = MODE_PREVIEW;
         // 隐藏 foreignObject（文本域宿主），显示预览
         editorHost.style.visibility = "hidden";
         previewForeignObject.style.display = "";
         renderPreview();
       } else {
-        toggleButton.textContent = `${ctx.t("btnEdit")}`;
-        toggleButton.title = ctx.t("btnEditTitle");
-        modeIndicator.textContent = ctx.t("modeEdit");
-        modeIndicator.dataset.mode = MODE_EDIT;
         editorHost.style.visibility = "";
         previewForeignObject.style.display = "none";
         textarea.focus();
@@ -519,6 +600,10 @@ export default (ctx) => {
     const dispose = () => {
       document.removeEventListener("keydown", onKeyDown, true);
       geometryObserver.disconnect();
+      if (labelRetryTimer) {
+        clearTimeout(labelRetryTimer);
+        labelRetryTimer = 0;
+      }
       if (syncFrame) {
         const cancel =
           typeof cancelAnimationFrame === "function" ? cancelAnimationFrame : clearTimeout;

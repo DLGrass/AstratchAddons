@@ -2,7 +2,7 @@ id: comment-markdown-editor
 name: Markdown Comment Editor
 version: 1.0.0
 author: DLGrass
-description: Adds Markdown editing and live preview to workspace comments. Supports headings, bold, italic, strikethrough, highlight, inline and fenced code, nested quotes, ordered/unordered/task lists with nesting, tables with alignment, images, links and autolinks, with Ctrl+M to toggle between edit and preview modes.
+description: Adds Markdown editing and live preview to workspace comments, with Ctrl+M to toggle between edit and preview modes.
 license: MIT
 
 icon: assets/icon.svg
