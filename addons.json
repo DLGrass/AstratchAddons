@@ -1,5 +1,6 @@
 [
     "example",
     "block-duplicate",
-    "clean-orphans"
+    "clean-orphans",
+    "comment-markdown-editor"
 ]

@@ -1,0 +1,18 @@
+{
+  "@name": "Markdown Comment Editor",
+  "@description": "Adds Markdown editing and live preview to workspace comments. Supports headings, bold, italic, strikethrough, highlight, inline and fenced code, nested quotes, ordered/unordered/task lists with nesting, tables with alignment, images, links and autolinks, with Ctrl+M to toggle between edit and preview modes.",
+  "@settings/defaultMode": "Default mode",
+  "@settings/defaultMode.description": "Which mode a newly opened comment starts in. Use \"edit\" or \"preview\".",
+  "@settings/shortcut": "Toggle shortcut",
+  "@settings/shortcut.description": "Keyboard shortcut used to switch between edit and preview mode, e.g. Ctrl+M or Alt+M.",
+  "@settings/allowHtml": "Render raw HTML",
+  "@settings/allowHtml.description": "When enabled, raw HTML inside comments is passed through instead of being escaped. Only enable for trusted projects.",
+  "@settings/showIndicator": "Show mode indicator",
+  "@settings/showIndicator.description": "Show the small mode label next to the toggle button in the comment top bar.",
+  "btnEdit": "Edit",
+  "btnEditTitle": "Switch to preview mode",
+  "btnPreview": "Preview",
+  "btnPreviewTitle": "Switch to edit mode",
+  "modeEdit": "Editing",
+  "modePreview": "Preview"
+}
