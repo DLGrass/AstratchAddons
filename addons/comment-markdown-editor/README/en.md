@@ -2,6 +2,8 @@
 
 Write Markdown directly inside workspace comments and switch to a live preview at any time. Comments can finally be laid out like documents — headings, lists, tables and code blocks all render properly instead of being crammed into one block of plain text.
 
+> Enabling this addon will make comments non-collapsible.
+
 ## Usage
 
 A toggle button appears on the right side of the comment top bar. Click it to switch between two modes:
@@ -11,7 +13,6 @@ A toggle button appears on the right side of the comment top bar. Click it to sw
 | Edit | Edit | A regular text box where you type Markdown |
 | Preview | Preview | The text box is hidden and the rendered result is shown |
 
-- A small label next to the button shows the current mode. It can be turned off with the "Show mode indicator" setting.
 - You can also press **Ctrl+M** to toggle. The shortcut only works while the focus is inside that comment (or while it is already in preview mode), so it never interferes with other input in the workspace.
 - Every time you enter preview mode the current content is rendered again — edit, then switch over to see the result.
 - The preview area scrolls on its own, so long comments never burst out of the comment box.
@@ -65,7 +66,6 @@ These can be combined — lists inside blockquotes, code blocks inside list item
 | Default mode | `edit` | The mode a comment opens in |
 | Toggle shortcut | `Ctrl+M` | Keyboard shortcut to switch between edit and preview |
 | Render raw HTML | `false` | Whether to pass raw HTML inside comments through |
-| Show mode indicator | `true` | Whether to show the current mode label in the top bar |
 
 ### Default mode
 
@@ -87,12 +87,6 @@ The keyboard shortcut used to switch between edit and preview, for example `Ctrl
 When **enabled**, raw HTML written inside comments is rendered as-is. Only enable this for your own, trusted projects.
 
 When **disabled** (default), all HTML is escaped, so anything like `<script>` is shown as plain text.
-
-### Show mode indicator
-
-When **enabled** (default), a small "Editing" or "Preview" label appears next to the toggle button so the current state is obvious at a glance.
-
-When **disabled**, only the toggle button remains, for a cleaner look.
 
 ## Security
 

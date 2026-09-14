@@ -73,7 +73,6 @@ export default (ctx) => {
 
   // ── 全局常量 ────────────────────────────────────────────────────────────
   const TOGGLE_CONTAINER_CLASS = "ash-md-toggle-container";
-  const MODE_INDICATOR_CLASS = "ash-md-mode-indicator";
   const TOGGLE_BUTTON_CLASS = "ash-md-toggle-button";
   const PREVIEW_CONTAINER_CLASS = "ash-md-preview-container";
   /** 自建的两层 foreignObject 的类名（用于 CSS 定位与 RTL 反向镜像） */
@@ -179,18 +178,6 @@ export default (ctx) => {
      外层 foreignObject 铺满注释宽度，所以注释框放大时按钮跟着一起移动。 */
   padding-right: 12px;
   pointer-events: auto;
-}
-.${MODE_INDICATOR_CLASS} {
-  font-size: 11px;
-  color: #000;
-  opacity: 0.65;
-  letter-spacing: 0.4px;
-  transition: opacity 0.2s ease;
-  user-select: none;
-}
-.${MODE_INDICATOR_CLASS}[data-mode="${MODE_PREVIEW}"] {
-  opacity: 1;
-  font-weight: 600;
 }
 .${TOGGLE_BUTTON_CLASS} {
   display: inline-flex;
@@ -379,10 +366,9 @@ export default (ctx) => {
     bubbleGroup.setAttribute(PROCESSED_ATTR, "true");
 
     const shortcut = parseShortcut(ctx.settings.get("shortcut"));
-    const showIndicator = ctx.settings.get("showIndicator") !== false;
     const startInPreview = ctx.settings.get("defaultMode") === MODE_PREVIEW;
 
-    // ── 顶部栏：模式指示器 + 切换按钮 ──
+    // ── 顶部栏：切换按钮 ──
     const toggleContainer = document.createElement("div");
     toggleContainer.className = TOGGLE_CONTAINER_CLASS;
     // 顶部栏是 SVG，容器需作为 foreignObject 才能承载 HTML
@@ -399,21 +385,16 @@ export default (ctx) => {
     // 靠右对齐、以及让开顶栏右侧的删除按钮，都交给 CSS（flex-end + padding-right）
     toggleForeignObject.appendChild(toggleContainer);
 
-    const modeIndicator = document.createElement("span");
-    modeIndicator.className = MODE_INDICATOR_CLASS;
-
     const toggleButton = document.createElement("button");
     toggleButton.className = TOGGLE_BUTTON_CLASS;
     toggleButton.type = "button";
     toggleButton.dataset.mode = MODE_EDIT;
 
-    /** 按当前模式刷新按钮 / 指示器文案（文案唯一写入点） */
+    /** 按当前模式刷新按钮文案（文案唯一写入点） */
     const applyLabels = (mode) => {
       const preview = mode === MODE_PREVIEW;
       toggleButton.textContent = t(preview ? "btnPreview" : "btnEdit");
       toggleButton.title = t(preview ? "btnPreviewTitle" : "btnEditTitle");
-      modeIndicator.textContent = t(preview ? "modePreview" : "modeEdit");
-      modeIndicator.dataset.mode = mode;
     };
 
     /** t() 未命中时会原样返回键名，据此判断翻译是否真的可解析 */
@@ -421,7 +402,7 @@ export default (ctx) => {
 
     /**
      * 初始文案带重试：host 的 i18n 表可能晚于插件主函数就绪，
-     * 就绪前渲染的文案会回显键名（如 "modeEdit"），就绪后重刷即可纠正。
+     * 就绪前渲染的文案会回显键名（如 "btnEdit"），就绪后重刷即可纠正。
      * 重试读的是 dataset.mode，期间用户切换模式也不会写错文案。
      */
     let labelRetryTimer = 0;
@@ -435,7 +416,6 @@ export default (ctx) => {
     applyLabels(toggleButton.dataset.mode);
     scheduleLabelRetry(20);
 
-    if (showIndicator) toggleContainer.appendChild(modeIndicator);
     toggleContainer.appendChild(toggleButton);
     topBar.appendChild(toggleForeignObject);
 

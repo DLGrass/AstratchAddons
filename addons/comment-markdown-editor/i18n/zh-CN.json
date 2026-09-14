@@ -7,12 +7,8 @@
   "@settings/shortcut.description": "在编辑与预览模式间切换的快捷键，例如 Ctrl+M 或 Alt+M。",
   "@settings/allowHtml": "渲染原始 HTML",
   "@settings/allowHtml.description": "开启后，注释中的原始 HTML 会被直接渲染而不是转义。仅对可信项目开启。",
-  "@settings/showIndicator": "显示模式指示器",
-  "@settings/showIndicator.description": "在注释顶栏的切换按钮旁显示当前模式的小标签。",
   "btnEdit": "编辑",
   "btnEditTitle": "切换到预览模式",
   "btnPreview": "预览",
-  "btnPreviewTitle": "切换到编辑模式",
-  "modeEdit": "编辑模式",
-  "modePreview": "预览模式"
+  "btnPreviewTitle": "切换到编辑模式"
 }
